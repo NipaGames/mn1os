@@ -1,8 +1,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "types.h"
 #include "string.h"
 
 #define VGA_BUFFER_ADDR 0xb8000

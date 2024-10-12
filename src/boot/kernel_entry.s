@@ -3,7 +3,6 @@
 section .entry
 global _start
 _start:
-    ; prepare stack
     mov esp, kernel_stack
     mov ebp, esp
 
@@ -13,7 +12,4 @@ _start:
     hlt
     jmp $
 
-section .bss
-align 16
-resb 16384
-kernel_stack:
+%include "src/boot/kernel_stack.s"
