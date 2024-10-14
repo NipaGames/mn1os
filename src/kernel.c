@@ -1,6 +1,9 @@
 #include "terminal.h"
+#include "interrupts.h"
 
 void kernel_main() {
+    idt_init();
+
     t_init();
     t_set_pos(0, t_search_next_free_ln());
 
