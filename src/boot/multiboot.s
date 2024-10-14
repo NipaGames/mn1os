@@ -13,8 +13,12 @@ align 4
 section .entry
 global _start
 _start:
-    cli
     lgdt [gdt.descriptor]
+    jmp CODE_SEGMENT:gdt_setup
+
+%include "src/boot/gdt.s"
+
+gdt_setup:
     ; prepare data segments
     mov ax, DATA_SEGMENT
     mov ds, ax
@@ -32,5 +36,4 @@ _start:
     hlt
     jmp $
 
-%include "src/boot/gdt.s"
 %include "src/boot/kernel_stack.s"

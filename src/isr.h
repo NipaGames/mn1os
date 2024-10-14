@@ -10,6 +10,9 @@ typedef struct {
     uint32_t eip, cs, eflags, esp_usr, ss;
 } __attribute__((packed)) registers;
 
+typedef void (*isr_handler)(registers* regs);
+
 void isr_init();
+void isr_set_handler(int interrupt, isr_handler handler);
 
 #endif

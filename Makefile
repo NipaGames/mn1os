@@ -10,7 +10,9 @@ COMMON_KERNEL_OBJS=$(BUILD_DIR)/common/sources/kernel.o \
 				   $(BUILD_DIR)/common/sources/string.o \
 				   $(BUILD_DIR)/common/sources/idt.o \
 				   $(BUILD_DIR)/common/sources/isr.o \
-				   $(BUILD_DIR)/common/sources/isrstubs.o
+				   $(BUILD_DIR)/common/sources/isr_stubs.o \
+				   $(BUILD_DIR)/common/sources/pic.o \
+				   $(BUILD_DIR)/common/sources/irq.o
 
 .PHONY: all
 

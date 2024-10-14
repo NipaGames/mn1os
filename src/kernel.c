@@ -1,10 +1,13 @@
 #include "terminal.h"
 #include "isr.h"
 #include "idt.h"
+#include "irq.h"
+#include "io.h"
 
 void kernel_main() {
     isr_init();
     idt_init();
+    irq_init();
 
     t_init();
     t_set_pos(0, t_search_next_free_ln());
