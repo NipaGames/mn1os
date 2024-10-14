@@ -13,6 +13,7 @@ align 4
 section .entry
 global _start
 _start:
+    cli
     lgdt [gdt.descriptor]
     jmp CODE_SEGMENT:gdt_setup
 
