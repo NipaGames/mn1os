@@ -13,7 +13,15 @@ align 4
 section .entry
 global _start
 _start:
+    cli
     lgdt [gdt.descriptor]
+    ; prepare data segments
+    mov ax, DATA_SEGMENT
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
     mov esp, kernel_stack
     mov ebp, esp

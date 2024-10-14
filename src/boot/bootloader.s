@@ -2,9 +2,6 @@
 BOOTLOADER_OFFSET equ 0x7c00
 [ORG BOOTLOADER_OFFSET]
 
-CODE_SEGMENT equ gdt.code - gdt
-DATA_SEGMENT equ gdt.data - gdt
-
 ; the kernel will be moved to KERNEL_OFFSET (mainly for linker compatibility with grub multiboot)
 %define KERNEL_OFFSET 0x100000
 

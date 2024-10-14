@@ -1,3 +1,6 @@
+CODE_SEGMENT equ gdt.code - gdt
+DATA_SEGMENT equ gdt.data - gdt
+
 gdt:
     dq 0                    ; null descriptor
 .code:
@@ -14,7 +17,8 @@ gdt:
     db 10010010b            ; access
     db 1111b | (1100b << 4) ; limit and flags
     db 0x00                 ; base
+.end:
 .descriptor:
-    dw gdt.descriptor - gdt - 1
+    dw gdt.end - gdt - 1
     dd gdt
 

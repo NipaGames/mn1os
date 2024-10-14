@@ -1,37 +1,37 @@
 #include "terminal.h"
 #include "io.h"
 
-uint16_t* t_buf;
-size_t t_pos_x = 0;
-size_t t_pos_y = 0;
-uint8_t t_color;
+uint16_t* g_t_buf;
+size_t g_t_pos_x = 0;
+size_t g_t_pos_y = 0;
+uint8_t g_t_color;
 
 void t_clear() {
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
-            t_buf[y * VGA_WIDTH + x] = vga_entry(' ', t_color);
+            g_t_buf[y * VGA_WIDTH + x] = vga_entry(' ', g_t_color);
         }
     }
-    t_pos_x = 0;
-    t_pos_y = 0;
+    g_t_pos_x = 0;
+    g_t_pos_y = 0;
 }
 
 void t_scroll(size_t rows) {
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
             size_t y_from = y + rows;
-            t_buf[y * VGA_WIDTH + x] = 
-                (y_from < VGA_HEIGHT) ? t_buf[y_from * VGA_WIDTH + x]: vga_entry(' ', t_color);
+            g_t_buf[y * VGA_WIDTH + x] = 
+                (y_from < VGA_HEIGHT) ? g_t_buf[y_from * VGA_WIDTH + x]: vga_entry(' ', g_t_color);
         }
     }
-    t_pos_y -= rows;
+    g_t_pos_y -= rows;
 }
 
 size_t t_search_next_free_ln() {
     size_t ln = 0;
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
-            uint16_t* pos = &t_buf[y * VGA_WIDTH + x];
+            uint16_t* pos = &g_t_buf[y * VGA_WIDTH + x];
             char c;
             uint8_t color;
             vga_get(*pos, &c, &color);
@@ -45,44 +45,44 @@ size_t t_search_next_free_ln() {
 }
 
 void t_init() {
-    t_buf = (uint16_t*) VGA_BUFFER_ADDR;
-    t_pos_x = 0;
-    t_pos_y = 0;
-    t_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    g_t_buf = (uint16_t*) VGA_BUFFER_ADDR;
+    g_t_pos_x = 0;
+    g_t_pos_y = 0;
+    g_t_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     t_sync_cursor_pos();
 }
 
 void t_set_pos(size_t x, size_t y) {
-    t_pos_x = x;
-    t_pos_y = y;
+    g_t_pos_x = x;
+    g_t_pos_y = y;
 }
 
 void t_get_pos(size_t* x, size_t* y) {
-    *x = t_pos_x;
-    *y = t_pos_y;
+    *x = g_t_pos_x;
+    *y = g_t_pos_y;
 }
 
 void t_set_color(uint8_t color) {
-    t_color = color;
+    g_t_color = color;
 }
 
 void t_get_color(uint8_t* color) {
-    *color = t_color;
+    *color = g_t_color;
 }
 
 void t_newline() {
-    t_pos_x = 0;
-    t_pos_y++;
-    if (t_pos_y == VGA_HEIGHT)
+    g_t_pos_x = 0;
+    g_t_pos_y++;
+    if (g_t_pos_y == VGA_HEIGHT)
         t_scroll(1);
 }
 
 void t_putc(char c) {
-    if (t_pos_x == VGA_WIDTH)
+    if (g_t_pos_x == VGA_WIDTH)
         t_newline();
-    const size_t index = t_pos_y * VGA_WIDTH + t_pos_x;
-    t_buf[index] = vga_entry(c, t_color);
-    t_pos_x++;
+    const size_t index = g_t_pos_y * VGA_WIDTH + g_t_pos_x;
+    g_t_buf[index] = vga_entry(c, g_t_color);
+    g_t_pos_x++;
 }
 
 void t_write_s(const char* data, size_t size) {
@@ -110,7 +110,7 @@ void t_set_cursor_pos(size_t x, size_t y) {
 }
 
 void t_sync_cursor_pos() {
-    t_set_cursor_pos(t_pos_x, t_pos_y);
+    t_set_cursor_pos(g_t_pos_x, g_t_pos_y);
 }
 
 void t_set_cursor(enum text_mode_cursor cursor) {

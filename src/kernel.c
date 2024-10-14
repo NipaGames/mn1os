@@ -1,7 +1,9 @@
 #include "terminal.h"
-#include "interrupts.h"
+#include "isr.h"
+#include "idt.h"
 
 void kernel_main() {
+    isr_init();
     idt_init();
 
     t_init();

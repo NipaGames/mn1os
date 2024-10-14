@@ -8,8 +8,9 @@ LD=i686-elf-ld
 COMMON_KERNEL_OBJS=$(BUILD_DIR)/common/sources/kernel.o \
 				   $(BUILD_DIR)/common/sources/terminal.o \
 				   $(BUILD_DIR)/common/sources/string.o \
-				   $(BUILD_DIR)/common/sources/interrupts.o \
-				   $(BUILD_DIR)/common/sources/intstubs.o
+				   $(BUILD_DIR)/common/sources/idt.o \
+				   $(BUILD_DIR)/common/sources/isr.o \
+				   $(BUILD_DIR)/common/sources/isrstubs.o
 
 .PHONY: all
 
