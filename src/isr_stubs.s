@@ -91,12 +91,6 @@ isr_common:
     add esp, 8
     iret
 
-global crash_me
-crash_me:
-    mov eax, 0
-    div eax
-    ret
-
 global isr_stub_table
 isr_stub_table:
 %assign i 0 

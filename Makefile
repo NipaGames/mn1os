@@ -5,14 +5,16 @@ GCC_FLAGS=-ffreestanding -m32 -O2 -nostdlib -nostdinc -Wall -Werror -fno-stack-p
 GCC=i686-elf-gcc
 LD=i686-elf-ld
 
-COMMON_KERNEL_OBJS=$(BUILD_DIR)/common/sources/kernel.o \
-				   $(BUILD_DIR)/common/sources/terminal.o \
-				   $(BUILD_DIR)/common/sources/string.o \
-				   $(BUILD_DIR)/common/sources/idt.o \
-				   $(BUILD_DIR)/common/sources/isr.o \
-				   $(BUILD_DIR)/common/sources/isr_stubs.o \
-				   $(BUILD_DIR)/common/sources/pic.o \
-				   $(BUILD_DIR)/common/sources/irq.o
+COMMON_KERNEL_OBJS= \
+	$(BUILD_DIR)/common/sources/kernel.o \
+	$(BUILD_DIR)/common/sources/string.o \
+	$(BUILD_DIR)/common/sources/memory.o \
+	$(BUILD_DIR)/common/sources/terminal.o \
+	$(BUILD_DIR)/common/sources/idt.o \
+	$(BUILD_DIR)/common/sources/isr.o \
+	$(BUILD_DIR)/common/sources/isr_stubs.o \
+	$(BUILD_DIR)/common/sources/pic.o \
+	$(BUILD_DIR)/common/sources/irq.o
 
 .PHONY: all
 

@@ -7,6 +7,7 @@
 #define VGA_BUFFER_ADDR 0xb8000
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
+#define TERMINAL_TAB_WIDTH 4
 
 enum vga_color {
     VGA_COLOR_BLACK = 0x0,
@@ -46,15 +47,33 @@ void    t_set_pos(size_t x, size_t y);
 void    t_get_pos(size_t* x, size_t* y);
 void    t_set_color(uint8_t color);
 void    t_get_color(uint8_t* color);
-void    t_putc(char c);
+void    t_put_char(char c);
+void    t_put_digit(int digit);
 void    t_newline();
+void    t_tab();
 void    t_write_s(const char* data, size_t size);
 void    t_write(const char* data);
+void    t_write_num(int num, int base);
+
+static inline void t_write_dec(int num) {
+    t_write_num(num, 10);
+}
+static inline void t_write_hex(int num) {
+    t_write_num(num, 16);
+}
+static inline void t_write_bin(int num) {
+    t_write_num(num, 2);
+}
+
+void    t_write_diagnostic_stub(const char* file, int line);
+#define T_WRITE_DIAGNOSTIC_STUB() \
+    t_write_diagnostic_stub(__FILE__, __LINE__); \
+    t_tab()
 
 enum text_mode_cursor {
     TEXT_MODE_CURSOR_NONE = 0x00,
-    TEXT_MODE_CURSOR_INSERT = 0x0f,
-    TEXT_MODE_CURSOR_INPUT = 0xef,
+    TEXT_MODE_CURSOR_BLOCK = 0x0f,
+    TEXT_MODE_CURSOR_UNDERLINE = 0xef,
 };
 
 void    t_set_cursor_pos(size_t x, size_t y);

@@ -77,7 +77,15 @@ void t_newline() {
         t_scroll(1);
 }
 
-void t_putc(char c) {
+void t_tab() {
+    int spaces = g_t_pos_x % TERMINAL_TAB_WIDTH;
+    if (spaces == 0)
+        spaces = TERMINAL_TAB_WIDTH;
+    for (int j = 0; j < spaces; j++)
+        t_put_char(' ');
+}
+
+void t_put_char(char c) {
     if (g_t_pos_x == VGA_WIDTH)
         t_newline();
     const size_t index = g_t_pos_y * VGA_WIDTH + g_t_pos_x;
@@ -85,14 +93,30 @@ void t_putc(char c) {
     g_t_pos_x++;
 }
 
+const char g_t_digits[16] = "0123456789abcdef";
+void t_put_digit(int digit) {
+    if (digit < 0 || digit > 16) {
+        T_WRITE_DIAGNOSTIC_STUB();
+        t_write("invalid digit! (0-16 allowed, ");
+        t_write(" given)");
+        return;
+    }
+
+    t_put_char(g_t_digits[digit]);
+}
+
 void t_write_s(const char* data, size_t size) {
     for (size_t i = 0; i < size; i++) {
         char c = data[i];
-        if (c == '\n') {
+        if (c == '\t') {
+            t_tab();
+            continue;
+        }
+        else if (c == '\n') {
             t_newline();
             continue;
         }
-        t_putc(c);
+        t_put_char(c);
     }
 }
 
@@ -100,13 +124,37 @@ void t_write(const char* data) {
     t_write_s(data, strlen(data));
 }
 
+void t_write_num(int num, int base) {
+    if (base <= 0 || base > 16) {
+        T_WRITE_DIAGNOSTIC_STUB();
+        t_write("invalid base! (1-16 allowed, ");
+        t_write_dec(base);
+        t_write(" given)\n");
+        return;
+    }
+
+    if (num < 0) {
+        t_put_char('-');
+        num = -num;
+    }
+    int next = num / base;
+    if (next != 0)
+        t_write_num(next, base);
+    t_put_digit(num % base);
+}
+
+void t_write_diagnostic_stub(const char* file, int line) {
+    t_write(file);
+    t_put_char(':');
+    t_write_dec(line);
+}
 
 void t_set_cursor_pos(size_t x, size_t y) {
     uint16_t pos = y * VGA_WIDTH + x;
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (uint8_t) (pos & 0xFF));
-    outb(0x3D4, 0x0E);
-    outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+    outb(0x3d4, 0x0f);
+    outb(0x3d5, (uint8_t) (pos & 0xff));
+    outb(0x3d4, 0x0e);
+    outb(0x3d5, (uint8_t) ((pos >> 8) & 0xff));
 }
 
 void t_sync_cursor_pos() {

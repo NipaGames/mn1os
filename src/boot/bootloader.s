@@ -116,12 +116,12 @@ start_protected:
     mov es, ax
     mov fs, ax
     mov gs, ax
-%if KERNEL_LOAD_SEGMENT * 16 | KERNEL_LOAD_OFFSET != KERNEL_OFFSET
+%if KERNEL_LOAD_LINEAR_OFFSET != KERNEL_OFFSET
     ; move kernel to the right offset
     mov si, str.kernel_move
     call println_protected
     mov ecx, KERNEL_LOAD_SECTORS * 512
-    mov esi, KERNEL_LOAD_SEGMENT * 16 | KERNEL_LOAD_OFFSET
+    mov esi, KERNEL_LOAD_LINEAR_OFFSET
     mov edi, KERNEL_OFFSET
     rep
     a32 movsb
