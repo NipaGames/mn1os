@@ -17,6 +17,13 @@ void isr_init() {
 }
 
 void isr_assign_handler(int interrupt, interrupt_handler handler) {
+    if (interrupt < 0 || interrupt > 255) {
+        T_WRITE_DIAGNOSTIC_STUB();
+        t_write("invalid interrupt! (0-255 allowed, ");
+        t_write_dec(interrupt);
+        t_write(" given)");
+        return;
+    }
     g_isr_handlers[interrupt] = handler;
 }
 

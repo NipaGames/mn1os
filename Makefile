@@ -9,12 +9,16 @@ COMMON_KERNEL_OBJS= \
 	$(BUILD_DIR)/common/sources/kernel.o \
 	$(BUILD_DIR)/common/sources/string.o \
 	$(BUILD_DIR)/common/sources/memory.o \
+	$(BUILD_DIR)/common/sources/rand.o \
 	$(BUILD_DIR)/common/sources/terminal.o \
 	$(BUILD_DIR)/common/sources/idt.o \
 	$(BUILD_DIR)/common/sources/isr.o \
 	$(BUILD_DIR)/common/sources/isr_stubs.o \
 	$(BUILD_DIR)/common/sources/pic.o \
-	$(BUILD_DIR)/common/sources/irq.o
+	$(BUILD_DIR)/common/sources/irq.o \
+	$(BUILD_DIR)/common/sources/pit.o \
+	$(BUILD_DIR)/common/sources/keyboard.o \
+	$(BUILD_DIR)/common/sources/cli.o
 
 .PHONY: all
 

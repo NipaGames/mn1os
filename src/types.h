@@ -10,4 +10,7 @@ typedef unsigned int    uint32_t;
 
 typedef uint32_t        size_t;
 
+#define INT_MAX 2147483647
+#define INT_MIN -2147483648
+
 #endif

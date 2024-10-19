@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "string.h"
+#include "keyboard.h"
 
 #define VGA_BUFFER_ADDR 0xb8000
 #define VGA_WIDTH 80
@@ -31,18 +32,20 @@ enum vga_color {
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
     return fg | bg << 4;
 }
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
+static inline uint16_t vga_entry(uint8_t uc, uint8_t color) {
     return (uint16_t) uc | (uint16_t) color << 8;
 }
-static inline void vga_get(uint16_t v, char* uc, uint8_t* color) {
-    *uc = (char) v;
+static inline void vga_get(uint16_t v, uint8_t* uc, uint8_t* color) {
+    *uc = (uint8_t) v;
     *color = (uint8_t) v >> 8;
 }
 
+void    t_erase(size_t pos, size_t count);
 void    t_clear();
 void    t_scroll(size_t rows);
 size_t  t_search_next_free_ln();
 void    t_init();
+void    t_hook_keyboard();
 void    t_set_pos(size_t x, size_t y);
 void    t_get_pos(size_t* x, size_t* y);
 void    t_set_color(uint8_t color);
@@ -71,7 +74,6 @@ void    t_write_diagnostic_stub(const char* file, int line);
     t_tab()
 
 enum text_mode_cursor {
-    TEXT_MODE_CURSOR_NONE = 0x00,
     TEXT_MODE_CURSOR_BLOCK = 0x0f,
     TEXT_MODE_CURSOR_UNDERLINE = 0xef,
 };
@@ -79,9 +81,13 @@ enum text_mode_cursor {
 void    t_set_cursor_pos(size_t x, size_t y);
 void    t_sync_cursor_pos();
 void    t_set_cursor(enum text_mode_cursor cursor);
-static inline void t_hide_cursor() {
-    t_set_cursor(TEXT_MODE_CURSOR_NONE);
-}
+void    t_hide_cursor();
+
+void    t_key_press(enum keycode key);
+void    t_key_release(enum keycode key);
+
+const char* t_scan_line();
+void        t_wait_for_input();
 
 #endif
 

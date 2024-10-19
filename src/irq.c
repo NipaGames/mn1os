@@ -10,6 +10,13 @@
 interrupt_handler g_irq_handlers[16];
 
 void irq_assign_handler(int interrupt, interrupt_handler handler) {
+    if (interrupt < 0 || interrupt > 15) {
+        T_WRITE_DIAGNOSTIC_STUB();
+        t_write("invalid interrupt! (0-15 allowed, ");
+        t_write_dec(interrupt);
+        t_write(" given)");
+        return;
+    }
     g_irq_handlers[interrupt] = handler;
 }
 
