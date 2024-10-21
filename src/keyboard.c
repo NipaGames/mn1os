@@ -1,12 +1,14 @@
 #include "keyboard.h"
 #include "io.h"
 #include "irq.h"
+#include "utf8.h"
 
 WCHAR keycode_to_char(uint32_t key) {
-    if (key >= 0x2000 && key < 0xf000)
+    key &= ~(KEY_RELEASE | KEY_KEYPAD);
+    if (key >= 0x20 && key < 0xf0)
+        return 0xff00 & (key << 8);
+    else if (is_utf8(key))
         return key;
-    if ((key & KEY_KEYPAD) == KEY_KEYPAD)
-        return key ^ KEY_KEYPAD;
     switch (key) {
         case KEY_ENTER:
             return 0x0a00;

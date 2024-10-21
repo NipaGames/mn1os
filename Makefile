@@ -18,7 +18,8 @@ COMMON_KERNEL_OBJS= \
 	$(BUILD_DIR)/common/sources/irq.o \
 	$(BUILD_DIR)/common/sources/pit.o \
 	$(BUILD_DIR)/common/sources/keyboard.o \
-	$(BUILD_DIR)/common/sources/cli.o
+	$(BUILD_DIR)/common/sources/cli.o \
+	$(BUILD_DIR)/common/sources/utf8.o
 
 .PHONY: all
 
