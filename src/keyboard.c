@@ -2,66 +2,25 @@
 #include "io.h"
 #include "irq.h"
 
-char keycode_to_char(enum keycode key) {
+WCHAR keycode_to_char(uint32_t key) {
+    if (key >= 0x2000 && key < 0xf000)
+        return key;
+    if ((key & KEY_KEYPAD) == KEY_KEYPAD)
+        return key ^ KEY_KEYPAD;
     switch (key) {
-        case KEY_0: case KEY_KEYPAD_0: return '0';
-        case KEY_1: case KEY_KEYPAD_1: return '1';
-        case KEY_2: case KEY_KEYPAD_2: return '2';
-        case KEY_3: case KEY_KEYPAD_3: return '3';
-        case KEY_4: case KEY_KEYPAD_4: return '4';
-        case KEY_5: case KEY_KEYPAD_5: return '5';
-        case KEY_6: case KEY_KEYPAD_6: return '6';
-        case KEY_7: case KEY_KEYPAD_7: return '7';
-        case KEY_8: case KEY_KEYPAD_8: return '8';
-        case KEY_9: case KEY_KEYPAD_9: return '9';
-
-        case KEY_A: return 'a';
-        case KEY_B: return 'b';
-        case KEY_C: return 'c';
-        case KEY_D: return 'd';
-        case KEY_E: return 'e';
-        case KEY_F: return 'f';
-        case KEY_G: return 'g';
-        case KEY_H: return 'h';
-        case KEY_I: return 'i';
-        case KEY_J: return 'j';
-        case KEY_K: return 'k';
-        case KEY_L: return 'l';
-        case KEY_M: return 'm';
-        case KEY_N: return 'n';
-        case KEY_O: return 'o';
-        case KEY_P: return 'p';
-        case KEY_Q: return 'q';
-        case KEY_R: return 'r';
-        case KEY_S: return 's';
-        case KEY_T: return 't';
-        case KEY_U: return 'u';
-        case KEY_V: return 'v';
-        case KEY_W: return 'w';
-        case KEY_X: return 'x';
-        case KEY_Y: return 'y';
-        case KEY_Z: return 'z';
-
-        case KEY_DASH: case KEY_KEYPAD_DASH: return '-';
-        case KEY_EQUALS: return '=';
-        case KEY_SPACE: return ' ';
-        case KEY_TAB: return '\t';
-        case KEY_SQUARE_BRACKET_OPEN: return '[';
-        case KEY_SQUARE_BRACKET_CLOSE: return ']';
-        case KEY_SEMICOLON: return ';';
-        case KEY_SINGLE_QUOTE: return '\'';
-        case KEY_BACKTICK: return '`';
-        case KEY_BACKSLASH: return '\\';
-        case KEY_COMMA: return ',';
-        case KEY_PERIOD: case KEY_KEYPAD_PERIOD: return '.';
-        case KEY_SLASH: return '/';
-        case KEY_ENTER: return '\n';
-        case KEY_KEYPAD_ASTERISK: return '*';
-        case KEY_KEYPAD_PLUS: return '+';
-
-        default: return '\0';
+        case KEY_ENTER:
+            return 0x0a00;
+        case KEY_TAB:
+            return 0x0900;
+        default:
+            return 0x0000;
     }
 }
+
+enum keymap_type {
+    KEYMAP_US = 0,
+    KEYMAP_FI = 1,
+};
 
 int g_kb_caps_lock_on = 0;
 int g_kb_shift_toggled = 0;
@@ -87,6 +46,19 @@ void key_release(enum keycode key) {
 
 #define PS2_KEYBOARD_DATA_PORT 0x60
 #define PS2_KEYBOARD_CMD_PORT 0x64
+
+void ps2_make_keymap_us(enum keycode* keys) {
+    keys[0x02] = KEY_1 | KEY_PRESS;
+    keys[0x03] = KEY_2 | KEY_PRESS;
+    keys[0x04] = KEY_3 | KEY_PRESS;
+    keys[0x05] = KEY_4 | KEY_PRESS;
+    keys[0x06] = KEY_5 | KEY_PRESS;
+    keys[0x07] = KEY_6 | KEY_PRESS;
+    keys[0x08] = KEY_7 | KEY_PRESS;
+    keys[0x09] = KEY_8 | KEY_PRESS;
+    keys[0x0a] = KEY_9 | KEY_PRESS;
+    keys[0x0b] = KEY_0 | KEY_PRESS;
+}
 
 // https://wiki.osdev.org/PS/2_Keyboard
 enum ps2_scancode {
@@ -477,7 +449,7 @@ void kb_init() {
     // set state
     outb(PS2_KEYBOARD_CMD_PORT, 0x60);
     outb(PS2_KEYBOARD_DATA_PORT, status);
-
+    // enable scancodes
     outb(PS2_KEYBOARD_DATA_PORT, 0xf4);
     sti();
 }

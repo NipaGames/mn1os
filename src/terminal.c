@@ -126,21 +126,13 @@ void t_put_char(char c) {
         g_t_tabw = TERMINAL_TAB_WIDTH;
 }
 
-const char g_t_digits[16] = "0123456789abcdef";
-void t_put_digit(int digit) {
-    if (digit < 0 || digit > 15) {
-        T_WRITE_DIAGNOSTIC_STUB();
-        t_write("invalid digit! (0-15 allowed, ");
-        t_write_dec(digit);
-        t_write(" given)");
-        return;
-    }
-
-    t_put_char(g_t_digits[digit]);
+int is_utf8(WCHAR c) {
+    uint8_t byte1 = c >> 8 & 0xff;
+    uint8_t byte2 = c & 0xff;
+    return (byte1 & 0xc0) == 0xc0 && (byte2 & 0xc0) == 0x80;
 }
 
-uint8_t utf8_to_cp437(uint8_t a, uint8_t b) {
-    uint16_t c = (a << 8) | b;
+uint8_t utf8_to_cp437(WCHAR c) {
     switch (c) {
         case 0xc2a1: return 0xad; // ¡
         case 0xc2a2: return 0x9b; // ¢
@@ -200,18 +192,30 @@ uint8_t utf8_to_cp437(uint8_t a, uint8_t b) {
     }
 }
 
+void t_put_char_utf8(WCHAR c) {
+    t_put_char(is_utf8(c) ? utf8_to_cp437(c) : (uint8_t) c >> 8 & 0xff);
+}
+
+const char g_t_digits[16] = "0123456789abcdef";
+void t_put_digit(int digit) {
+    if (digit < 0 || digit > 15) {
+        T_WRITE_DIAGNOSTIC_STUB();
+        t_write("invalid digit! (0-15 allowed, ");
+        t_write_dec(digit);
+        t_write(" given)");
+        return;
+    }
+
+    t_put_char(g_t_digits[digit]);
+}
+
 void t_write_s(const char* data, size_t size) {
     for (size_t i = 0; i < size; i++) {
         uint8_t c = data[i];
-        // utf-8
-        if ((c & 0xc0) == 0xc0 && i + 1 < size) {
-            uint8_t c2 = data[i + 1];
-            if ((c2 & 0xc0) == 0x80) {
-                c = utf8_to_cp437(c, c2);
-                i++;
-            }
-        }
-        t_put_char(c);
+        if ((c & 0xc0) == 0xc0 && i != size - 1)
+            t_put_char_utf8((uint16_t) c << 8 | (uint8_t) data[++i]);
+        else
+            t_put_char(c);
     }
 }
 
@@ -268,7 +272,7 @@ void t_hide_cursor() {
     outb(0x3d5, 0x20);
 }
 
-void t_key_press(enum keycode key) {
+void t_key_press(uint32_t key) {
     if (g_t_waiting_for_input) {
         g_t_waiting_for_input = 0;
         return;
@@ -283,8 +287,11 @@ void t_key_press(enum keycode key) {
     else if (key == KEY_BACKSPACE) {
         if (g_t_input_pos == 0)
             return;
-        char prev = g_t_input_line[--g_t_input_pos];
-        g_t_input_line[g_t_input_pos] = '\0';
+        char prev;
+        do {
+            prev = g_t_input_line[--g_t_input_pos];
+            g_t_input_line[g_t_input_pos] = '\0';
+        } while ((prev & 0xc0) == 0x80);
         size_t pos = g_t_pos_y * VGA_WIDTH + g_t_pos_x;
         size_t len = 1;
         // please don't. just don't.
@@ -292,11 +299,14 @@ void t_key_press(enum keycode key) {
             size_t n = TERMINAL_TAB_WIDTH - g_t_input_start_tabw;
             size_t i = g_t_input_pos;
             while (i != 0) {
-                if (g_t_input_line[--i] == '\t') {
+                uint8_t c = g_t_input_line[--i];
+                if (c == '\t') {
                     n += g_t_input_start_tabw;
                     break;
                 }
-                n++;
+                // utf-8 second byte
+                if ((c & 0xc0) != 0x80)
+                    n++;
             }
             len = TERMINAL_TAB_WIDTH - (n % TERMINAL_TAB_WIDTH);
             g_t_tabw = len;
@@ -311,16 +321,27 @@ void t_key_press(enum keycode key) {
     else {
         if (g_t_input_pos == sizeof(g_t_input_line) - 1)
             return;
-        char c = keycode_to_char(key);
+        WCHAR c = keycode_to_char(key);
         if (c == '\0')
             return;
-        g_t_input_line[g_t_input_pos++] = c;
-        t_put_char(c);
+        uint8_t byte1 = (c & 0xff00) >> 8;
+        uint8_t byte2 = (c & 0x00ff);
+        if (is_utf8(c)) {
+            if (g_t_input_pos != sizeof(g_t_input_line) - 2) {
+                g_t_input_line[g_t_input_pos++] = byte1;
+                g_t_input_line[g_t_input_pos++] = byte2;
+                t_put_char_utf8(c);
+            }
+        }
+        else {
+            g_t_input_line[g_t_input_pos++] = byte1;
+            t_put_char(byte1);
+        }
     }
     t_sync_cursor_pos();
 }
 
-void t_key_release(enum keycode key) {
+void t_key_release(uint32_t key) {
 }
 
 const char* t_scan_line() {

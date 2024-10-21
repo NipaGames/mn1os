@@ -26,10 +26,12 @@ void irq_handle(registers* regs) {
         g_irq_handlers[irq](regs);
     }
     else {
+        /*
         T_WRITE_DIAGNOSTIC_STUB();
         t_write("unhandled irq lol (irq ");
         t_write_dec(irq);
         t_write(")\n");
+        */
     }
     pic_end_interrupt(irq);
 }

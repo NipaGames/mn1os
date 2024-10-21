@@ -83,8 +83,8 @@ void    t_sync_cursor_pos();
 void    t_set_cursor(enum text_mode_cursor cursor);
 void    t_hide_cursor();
 
-void    t_key_press(enum keycode key);
-void    t_key_release(enum keycode key);
+void    t_key_press(uint32_t key);
+void    t_key_release(uint32_t key);
 
 const char* t_scan_line();
 void        t_wait_for_input();

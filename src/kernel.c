@@ -5,6 +5,7 @@
 #include "pit.h"
 #include "keyboard.h"
 #include "cli.h"
+#include "io.h"
 
 void kernel_main() {
     t_init();
@@ -12,8 +13,9 @@ void kernel_main() {
     t_clear();
 
     t_write("Now in the kernel!\n");
-    t_newline();
+    // t_write("Nyt käyttöjärjestelmän ytimessä!\n");
     t_write("welcome :3\n");
+    // t_write("tervetuloa :3\n");
     t_newline();
 
     isr_init();
@@ -24,13 +26,16 @@ void kernel_main() {
     t_hook_keyboard();
 
     t_write("Press any key to enter the CLI.\n");
+    // t_write("Paina mitä tahansa näppäintä jatkaaksesi.\n");
     t_wait_for_input();
     t_clear();
     enter_cli();
 
-    // TODO: power off
-    // t_newline();
-    // t_write("Press any key to power off.\n");
-    // t_wait_for_input();
+    // power off
+    t_newline();
+    t_write("Press any key to reboot.\n");
+    // t_write("Paina mitä tahansa näppäintä käynnistääksesi tietokoneen uudestaan.\n");
+    t_wait_for_input();
+    reboot();
 }
 
