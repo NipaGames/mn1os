@@ -2,8 +2,127 @@
 #include "terminal.h"
 #include "rand.h"
 #include "pit.h"
+#include "keymaps.h"
+#include "io.h"
+
+int c_help(int argc, char* argv[]);
+int c_clear(int argc, char* argv[]);
+int c_keys(int argc, char* argv[]);
+int c_echo(int argc, char* argv[]);
+int c_reboot(int argc, char* argv[]);
+int c_mn1(int argc, char* argv[]);
+
+const cli_command g_cli_commands[] = {
+    { "help", c_help },
+    { "clear", c_clear },
+    { "keys", c_keys },
+    { "echo", c_echo },
+    { "reboot", c_reboot },
+    { "mn1", c_mn1 },
+};
 
 void enter_cli() {
+    while (1) {
+        t_write("> ");
+        char* line = t_scan_line();
+        int begin = 0;
+        int i = 0;
+        int argc = 1;
+        while (isspace(line[begin]))
+            begin++;
+        if (line[begin] == '\0')
+            continue;
+        i = begin;
+        while (line[i] != '\0') {
+            if (isspace(line[i])) {
+                while (isspace(line[++i]));
+                if (line[i] == '\0')
+                    break;
+                argc++;
+            }
+            else
+                i++;
+        }
+        char* argv[argc];
+        i = begin;
+        argc = 0;
+        while (line[i] != '\0') {
+            argv[argc++] = &line[i++];
+            while (!isspace(line[i]) && line[i] != '\0')
+                i++;
+            if (line[i] == '\0')
+                break;
+            line[i] = '\0';
+            while (isspace(line[++i]));
+        }
+        for (int i = 0; i < sizeof(g_cli_commands) / sizeof(g_cli_commands[0]); i++) {
+            const cli_command* cmd = &g_cli_commands[i];
+            if (strcmp(argv[0], cmd->name) == 0) {
+                int err = cmd->handler(argc, argv);
+                if (err != CMD_EXIT_SUCCESS) {
+                    t_write("error code ");
+                    t_write_dec(err);
+                    t_newline();
+                }
+                break;
+            }
+        }
+    }
+}
+
+int c_help(int argc, char* argv[]) {
+    for (int i = 0; i < sizeof(g_cli_commands) / sizeof(g_cli_commands[0]); i++) {
+        const cli_command* cmd = &g_cli_commands[i];
+        t_write(cmd->name);
+        t_newline();
+    }
+    return CMD_EXIT_SUCCESS;
+}
+
+int c_clear(int argc, char* argv[]) {
+    t_clear();
+    return CMD_EXIT_SUCCESS;
+}
+
+int c_keys(int argc, char* argv[]) {
+    if (argc == 1) {
+        switch (kb_get_keymap()) {
+            case KEYMAP_US:
+                t_write("us");
+                break;
+            case KEYMAP_FI:
+                t_write("fi");
+                break;
+        }
+        t_newline();
+    }
+    else {
+        if (strcmp(argv[1], "us") == 0)
+            kb_set_keymap(KEYMAP_US);
+        else if (strcmp(argv[1], "fi") == 0)
+            kb_set_keymap(KEYMAP_FI);
+        else
+            return CMD_EXIT_FAILURE;
+    }
+    return CMD_EXIT_SUCCESS;
+}
+
+int c_echo(int argc, char* argv[]) {
+    for (int i = 1; i < argc; i++) {
+        t_write(argv[i]);
+        if (i + 1 != argc)
+            t_put_char(' ');
+    }
+    t_newline();
+    return CMD_EXIT_SUCCESS;
+}
+
+int c_reboot(int argc, char* argv[]) {
+    reboot();
+    return CMD_EXIT_SUCCESS;
+}
+
+int c_mn1(int argc, char* argv[]) {
     int n;
     while (1) {
         t_write("Anna arvattava kokonaisluku väliltä 1-100: ");
@@ -22,4 +141,5 @@ void enter_cli() {
     t_write("Arvauksia tarvittiin ");
     t_write_dec(i);
     t_write(" kpl.\n");
+    return CMD_EXIT_SUCCESS;
 }

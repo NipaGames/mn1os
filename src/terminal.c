@@ -207,7 +207,7 @@ void t_hide_cursor() {
     outb(0x3d5, 0x20);
 }
 
-void t_key_press(uint32_t key) {
+void t_key_press(uint32_t key, WCHAR c) {
     if (g_t_waiting_for_input) {
         g_t_waiting_for_input = 0;
         return;
@@ -256,7 +256,6 @@ void t_key_press(uint32_t key) {
     else {
         if (g_t_input_pos == sizeof(g_t_input_line) - 1)
             return;
-        WCHAR c = keycode_to_char(key);
         if (c == 0x0000)
             return;
         uint8_t byte1 = (c & 0xff00) >> 8;
@@ -276,10 +275,10 @@ void t_key_press(uint32_t key) {
     t_sync_cursor_pos();
 }
 
-void t_key_release(uint32_t key) {
+void t_key_release(uint32_t key, WCHAR c) {
 }
 
-const char* t_scan_line() {
+char* t_scan_line() {
     t_sync_cursor_pos();
     t_set_cursor(TEXT_MODE_CURSOR_UNDERLINE);
     g_t_input_pos = 0;

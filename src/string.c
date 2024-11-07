@@ -8,10 +8,28 @@ size_t strlen(const char* s) {
     return len;
 }
 
+int strcmp(const char* s1, const char* s2) {
+    while (*s1 != '\0' && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char*) s1 - *(const unsigned char*) s2;
+}
+
 char to_lower(char c) {
     if (c >= 'A' && c <= 'Z')
         return c + 32;
     return c;
+}
+
+int isspace(char c) {
+    return
+        c == ' '    ||
+        c == '\t'   ||
+        c == '\n'   ||
+        c == '\v'   ||
+        c == '\f'   ||
+        c == '\r';
 }
 
 int str_to_int(const char* s, int* err, int base) {
@@ -40,12 +58,13 @@ int str_to_int(const char* s, int* err, int base) {
     }
     unsigned int n = 0;
     unsigned int cutoff = (sign == -1) ? -(unsigned int) INT_MIN : INT_MAX;
-	int cutlim = cutoff % (unsigned int) base;
-	cutoff /= (unsigned int) base;
-    for (; i < len; i++) {
+    int cutlim = cutoff % (unsigned int) base;
+    cutoff /= (unsigned int) base;
+    while (i < len) {
         char c = to_lower(s[i]);
         if (i == 0 && i != len - 1 && c == '-') {
             n *= -1;
+            i++;
             continue;
         }
         int digit = -1;
@@ -59,6 +78,7 @@ int str_to_int(const char* s, int* err, int base) {
         }
         n *= base;
         n += digit;
+        i++;
     }
     n *= sign;
     if (err) *err = 0;

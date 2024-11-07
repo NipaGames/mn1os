@@ -4,9 +4,11 @@
 #include "types.h"
 
 size_t strlen(const char* s);
+int strcmp(const char* s1, const char* s2);
 
 // works only on ascii
 char to_lower(char c);
+int isspace(char c);
 
 int str_to_int(const char* s, int* err, int base);
 

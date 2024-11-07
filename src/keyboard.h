@@ -4,13 +4,23 @@
 #include "types.h"
 #include "utf8.h"
 
+enum keyboard_modifiers {
+    KB_MODIFIER_NONE            = 0x0000,
+    KB_MODIFIER_SHIFT           = 0x0001,
+    KB_MODIFIER_CAPS_LOCK       = 0x0010,
+    KB_MODIFIER_NUM_LOCK        = 0x0100,
+    KB_MODIFIER_SCROLL_LOCK     = 0x1000,
+};
+
 enum keycode {
+    KEY_UNKNOWN = 0x00000000,
     KEY_PRESS   = 0x00000000,
     KEY_RELEASE = 0x10000000,
     KEY_KEYPAD  = 0x01000000,
 
     KEY_SPACE = 0x20,
     KEY_SINGLE_QUOTE = 0x27,
+    KEY_PLUS = 0x2b,
     KEY_COMMA = 0x2c,
     KEY_DASH = 0x2d,
     KEY_PERIOD = 0x2e,
@@ -26,37 +36,44 @@ enum keycode {
     KEY_8 = 0x38,
     KEY_9 = 0x39,
     KEY_SEMICOLON = 0x3b,
+    KEY_LT = 0x3c,
     KEY_EQUALS = 0x3d,
-    KEY_A = 0x41,
-    KEY_B = 0x42,
-    KEY_C = 0x43,
-    KEY_D = 0x44,
-    KEY_E = 0x45,
-    KEY_F = 0x46,
-    KEY_G = 0x47,
-    KEY_H = 0x48,
-    KEY_I = 0x49,
-    KEY_J = 0x4a,
-    KEY_K = 0x4b,
-    KEY_L = 0x4c,
-    KEY_M = 0x4d,
-    KEY_N = 0x4e,
-    KEY_O = 0x4f,
-    KEY_P = 0x50,
-    KEY_Q = 0x51,
-    KEY_R = 0x52,
-    KEY_S = 0x53,
-    KEY_T = 0x54,
-    KEY_U = 0x55,
-    KEY_V = 0x56,
-    KEY_W = 0x57,
-    KEY_X = 0x58,
-    KEY_Y = 0x59,
-    KEY_Z = 0x5a,
+    KEY_A = 0x61,
+    KEY_B = 0x62,
+    KEY_C = 0x63,
+    KEY_D = 0x64,
+    KEY_E = 0x65,
+    KEY_F = 0x66,
+    KEY_G = 0x67,
+    KEY_H = 0x68,
+    KEY_I = 0x69,
+    KEY_J = 0x6a,
+    KEY_K = 0x6b,
+    KEY_L = 0x6c,
+    KEY_M = 0x6d,
+    KEY_N = 0x6e,
+    KEY_O = 0x6f,
+    KEY_P = 0x70,
+    KEY_Q = 0x71,
+    KEY_R = 0x72,
+    KEY_S = 0x73,
+    KEY_T = 0x74,
+    KEY_U = 0x75,
+    KEY_V = 0x76,
+    KEY_W = 0x77,
+    KEY_X = 0x78,
+    KEY_Y = 0x79,
+    KEY_Z = 0x7a,
     KEY_SQUARE_BRACKET_OPEN = 0x5b,
     KEY_BACKSLASH = 0x5c,
     KEY_SQUARE_BRACKET_CLOSE = 0x5d,
+    KEY_CIRCUMFLEX = 0x5e,
     KEY_BACKTICK = 0x60,
+    KEY_DIAERESIS = 0xc2a8,
+    KEY_ACUTE_ACCENT = 0xc2b4,
+    KEY_A_DIAERESIS = 0xc3a4,
+    KEY_ARING = 0xc3a5,
+    KEY_O_DIAERESIS = 0xc3b6,
     KEY_ESC         = 0x00010000,
     KEY_ENTER       = 0x00020000,
     KEY_TAB         = 0x00030000,
@@ -96,11 +113,13 @@ enum keycode {
     KEY_KEYPAD_PLUS = KEY_KEYPAD | 0x2b,
 };
 
-WCHAR keycode_to_char(uint32_t key);
 void kb_init();
 
-typedef void (*keyboard_event_handler)(uint32_t key);
-void kb_on_key_press(keyboard_event_handler handler);
-void kb_on_key_release(keyboard_event_handler handler);
+typedef void (*kb_key_event_handler)(uint32_t key, WCHAR c);
+void kb_on_key_press(kb_key_event_handler handler);
+void kb_on_key_release(kb_key_event_handler handler);
+enum keymap;
+void kb_set_keymap(enum keymap keys);
+enum keymap kb_get_keymap();
 
 #endif
