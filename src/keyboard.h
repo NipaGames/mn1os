@@ -69,6 +69,7 @@ enum keycode {
     KEY_SQUARE_BRACKET_CLOSE = 0x5d,
     KEY_CIRCUMFLEX = 0x5e,
     KEY_BACKTICK = 0x60,
+    KEY_SECTION = 0xc2a7,
     KEY_DIAERESIS = 0xc2a8,
     KEY_ACUTE_ACCENT = 0xc2b4,
     KEY_A_DIAERESIS = 0xc3a4,

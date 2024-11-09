@@ -5,20 +5,20 @@
 #include "keymaps.h"
 #include "io.h"
 
-int c_help(int argc, char* argv[]);
 int c_clear(int argc, char* argv[]);
-int c_keys(int argc, char* argv[]);
 int c_echo(int argc, char* argv[]);
-int c_reboot(int argc, char* argv[]);
+int c_help(int argc, char* argv[]);
+int c_keys(int argc, char* argv[]);
 int c_mn1(int argc, char* argv[]);
+int c_reboot(int argc, char* argv[]);
 
 const cli_command g_cli_commands[] = {
-    { "help", c_help },
     { "clear", c_clear },
-    { "keys", c_keys },
     { "echo", c_echo },
-    { "reboot", c_reboot },
+    { "help", c_help },
+    { "keys", c_keys },
     { "mn1", c_mn1 },
+    { "reboot", c_reboot },
 };
 
 void enter_cli() {
@@ -70,6 +70,11 @@ void enter_cli() {
     }
 }
 
+int c_clear(int argc, char* argv[]) {
+    t_clear();
+    return CMD_EXIT_SUCCESS;
+}
+
 int c_help(int argc, char* argv[]) {
     for (int i = 0; i < sizeof(g_cli_commands) / sizeof(g_cli_commands[0]); i++) {
         const cli_command* cmd = &g_cli_commands[i];
@@ -79,8 +84,13 @@ int c_help(int argc, char* argv[]) {
     return CMD_EXIT_SUCCESS;
 }
 
-int c_clear(int argc, char* argv[]) {
-    t_clear();
+int c_echo(int argc, char* argv[]) {
+    for (int i = 1; i < argc; i++) {
+        t_write(argv[i]);
+        if (i + 1 != argc)
+            t_put_char(' ');
+    }
+    t_newline();
     return CMD_EXIT_SUCCESS;
 }
 
@@ -107,21 +117,6 @@ int c_keys(int argc, char* argv[]) {
     return CMD_EXIT_SUCCESS;
 }
 
-int c_echo(int argc, char* argv[]) {
-    for (int i = 1; i < argc; i++) {
-        t_write(argv[i]);
-        if (i + 1 != argc)
-            t_put_char(' ');
-    }
-    t_newline();
-    return CMD_EXIT_SUCCESS;
-}
-
-int c_reboot(int argc, char* argv[]) {
-    reboot();
-    return CMD_EXIT_SUCCESS;
-}
-
 int c_mn1(int argc, char* argv[]) {
     int n;
     while (1) {
@@ -143,3 +138,9 @@ int c_mn1(int argc, char* argv[]) {
     t_write(" kpl.\n");
     return CMD_EXIT_SUCCESS;
 }
+
+int c_reboot(int argc, char* argv[]) {
+    reboot();
+    return CMD_EXIT_SUCCESS;
+}
+

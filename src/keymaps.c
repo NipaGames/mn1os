@@ -1,4 +1,6 @@
 #include "keymaps.h"
+#include "string.h"
+#include "utf8.h"
 
 static const uint32_t g_ps2_scancodes_us[0xff] = {
     [0x02] = KEY_1 | KEY_PRESS,
@@ -211,7 +213,7 @@ static const uint32_t g_ps2_scancodes_fi[0xff] = {
     [0x26] = KEY_L | KEY_PRESS,
     [0x27] = KEY_O_DIAERESIS | KEY_PRESS,
     [0x28] = KEY_A_DIAERESIS | KEY_PRESS,
-    [0x29] = KEY_BACKTICK | KEY_PRESS,
+    [0x29] = KEY_SECTION | KEY_PRESS,
     [0x2a] = KEY_SHIFT_LEFT | KEY_PRESS,
     [0x2b] = KEY_SINGLE_QUOTE | KEY_PRESS,
     [0x2c] = KEY_Z | KEY_PRESS,
@@ -296,7 +298,7 @@ static const uint32_t g_ps2_scancodes_fi[0xff] = {
     [0xa6] = KEY_L | KEY_RELEASE,
     [0xa7] = KEY_O_DIAERESIS | KEY_RELEASE,
     [0xa8] = KEY_A_DIAERESIS | KEY_RELEASE,
-    [0xa9] = KEY_BACKTICK | KEY_RELEASE,
+    [0xa9] = KEY_SECTION | KEY_RELEASE,
     [0xaa] = KEY_SHIFT_LEFT | KEY_RELEASE,
     [0xab] = KEY_SINGLE_QUOTE | KEY_RELEASE,
     [0xac] = KEY_Z | KEY_RELEASE,
@@ -346,10 +348,74 @@ static const uint32_t g_ps2_scancodes_fi[0xff] = {
 
 WCHAR keycode_to_char(enum keymap keys, uint32_t key, enum keyboard_modifiers modifiers) {
     key &= ~(KEY_RELEASE | KEY_KEYPAD);
-    if (key >= 0x20 && key < 0xf0)
-        return 0xff00 & (key << 8);
-    else if (is_utf8(key))
-        return key;
+    int flag_shift = ((modifiers & KB_MODIFIER_SHIFT) == KB_MODIFIER_SHIFT);
+    if (flag_shift) {
+        switch (keys) {
+            case KEYMAP_US:
+                switch (key) {
+                    case KEY_1: return 0x2100;
+                    case KEY_2: return 0x4000;
+                    case KEY_3: return 0x2300;
+                    case KEY_4: return 0x2400;
+                    case KEY_5: return 0x2500;
+                    case KEY_6: return 0x5e00;
+                    case KEY_7: return 0x2600;
+                    case KEY_8: return 0x2a00;
+                    case KEY_9: return 0x2800;
+                    case KEY_0: return 0x2900;
+                    case KEY_DASH: return 0x5f00;
+                    case KEY_EQUALS: return 0x2b00;
+                    case KEY_SQUARE_BRACKET_OPEN: return 0x7b00;
+                    case KEY_SQUARE_BRACKET_CLOSE: return 0x7d00;
+                    case KEY_SEMICOLON: return 0x3a00;
+                    case KEY_SINGLE_QUOTE: return 0x2200;
+                    case KEY_BACKTICK: return 0x7e00;
+                    case KEY_BACKSLASH: return 0x7c00;
+                    case KEY_COMMA: return 0x3c00;
+                    case KEY_PERIOD: return 0x3e00;
+                    case KEY_SLASH: return 0x3f00;
+                    default: break;
+                }
+                break;
+            case KEYMAP_FI:
+                switch (key) {
+                    case KEY_1: return 0x2100;
+                    case KEY_2: return 0x2200;
+                    case KEY_3: return 0x2300;
+                    case KEY_4: return 0xc2a4;
+                    case KEY_5: return 0x2500;
+                    case KEY_6: return 0x2600;
+                    case KEY_7: return 0x2f00;
+                    case KEY_8: return 0x2800;
+                    case KEY_9: return 0x2900;
+                    case KEY_0: return 0x3d00;
+                    case KEY_PLUS: return 0x3f00;
+                    case KEY_ACUTE_ACCENT: return 0x6000;
+                    case KEY_DIAERESIS: return 0x5e00;
+                    case KEY_SECTION: return 0xc2bd;
+                    case KEY_SINGLE_QUOTE: return 0x2a00;
+                    case KEY_COMMA: return 0x3b00;
+                    case KEY_PERIOD: return 0x3a00;
+                    case KEY_DASH: return 0x5f00;
+                    case KEY_LT: return 0x3e00;
+                    default: break;
+                }
+                break;
+        }
+    }
+    int flag_capitalize = flag_shift ^ ((modifiers & KB_MODIFIER_CAPS_LOCK) == KB_MODIFIER_CAPS_LOCK);
+    if (key >= 0x20 && key < 0xf0) {
+        if (flag_capitalize)
+            return 0xff00 & (to_upper(key) << 8);
+        else
+            return 0xff00 & (key << 8);
+    }
+    else if (is_utf8(key)) {
+        if (flag_capitalize)
+            return to_upper_utf8(key);
+        else
+            return key;
+    }
     switch (key) {
         case KEY_ENTER:
             return 0x0a00;

@@ -6,6 +6,8 @@
 #define WCHAR uint16_t
 
 int     is_utf8(WCHAR c);
+WCHAR   to_lower_utf8(WCHAR c);
+WCHAR   to_upper_utf8(WCHAR c);
 uint8_t utf8_to_cp437(WCHAR c);
 
 #endif

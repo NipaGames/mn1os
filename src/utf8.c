@@ -7,6 +7,18 @@ int is_utf8(WCHAR c) {
     return (byte1 & 0xc0) == 0xc0 && (byte2 & 0xc0) == 0x80;
 }
 
+WCHAR to_lower_utf8(WCHAR c) {
+    if (c >= 0xc380 && c <= 0xc39e)
+        return c + 0x20;
+    return c;
+}
+
+WCHAR to_upper_utf8(WCHAR c) {
+    if (c >= 0xc3a0 && c <= 0xc3be)
+        return c - 0x20;
+    return c;
+}
+
 uint8_t utf8_to_cp437(WCHAR c) {
     switch (c) {
         case 0xc2a1: return 0xad; // ¡

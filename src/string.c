@@ -17,8 +17,14 @@ int strcmp(const char* s1, const char* s2) {
 }
 
 char to_lower(char c) {
-    if (c >= 'A' && c <= 'Z')
-        return c + 32;
+    if (c >= 0x41 && c <= 0x5a)
+        return c + 0x20;
+    return c;
+}
+
+char to_upper(char c) {
+    if (c >= 0x61 && c <= 0x7a)
+        return c - 0x20;
     return c;
 }
 
