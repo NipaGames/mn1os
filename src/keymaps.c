@@ -410,7 +410,7 @@ WCHAR keycode_to_char(enum keymap keys, uint32_t key, enum keyboard_modifiers mo
         else
             return 0xff00 & (key << 8);
     }
-    else if (is_utf8(key)) {
+    else if (key == (key & 0xffff) && is_utf8(key)) {
         if (flag_capitalize)
             return to_upper_utf8(key);
         else

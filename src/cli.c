@@ -5,6 +5,7 @@
 #include "keymaps.h"
 #include "io.h"
 
+int c_args(int argc, char* argv[]);
 int c_clear(int argc, char* argv[]);
 int c_echo(int argc, char* argv[]);
 int c_help(int argc, char* argv[]);
@@ -13,6 +14,7 @@ int c_mn1(int argc, char* argv[]);
 int c_reboot(int argc, char* argv[]);
 
 const cli_command g_cli_commands[] = {
+    { "args", c_args },
     { "clear", c_clear },
     { "echo", c_echo },
     { "help", c_help },
@@ -28,31 +30,55 @@ void enter_cli() {
         int begin = 0;
         int i = 0;
         int argc = 1;
+        int quotes = 0;
         while (isspace(line[begin]))
             begin++;
         if (line[begin] == '\0')
             continue;
         i = begin;
         while (line[i] != '\0') {
-            if (isspace(line[i])) {
+            if (isspace(line[i]) && (quotes % 2) == 1) {
                 while (isspace(line[++i]));
                 if (line[i] == '\0')
                     break;
                 argc++;
             }
-            else
+            else {
+                if (line[i] == '"')
+                    quotes++;
                 i++;
+            }
+        }
+        if ((quotes % 2) == 1) {
+            t_write("syntax error\n");
+            continue;
         }
         char* argv[argc];
         i = begin;
         argc = 0;
+        quotes = 0;
         while (line[i] != '\0') {
-            argv[argc++] = &line[i++];
-            while (!isspace(line[i]) && line[i] != '\0')
+            if (line[i] == '"') {
                 i++;
+                quotes++;
+                continue;
+            }
+            argv[argc++] = &line[i++];
+            int inquotes = ((quotes % 2) == 1);
+            while ((!isspace(line[i]) || inquotes) && line[i] != '\0') {
+                if (line[i] == '"') {
+                    quotes++;
+                    break;
+                }
+                i++;
+            }
             if (line[i] == '\0')
                 break;
             line[i] = '\0';
+            if ((quotes % 2) == 1) {
+                i++;
+                continue;
+            }
             while (isspace(line[++i]));
         }
         for (int i = 0; i < sizeof(g_cli_commands) / sizeof(g_cli_commands[0]); i++) {
@@ -68,6 +94,14 @@ void enter_cli() {
             }
         }
     }
+}
+
+int c_args(int argc, char* argv[]) {
+    for (int i = 0; i < argc; i++) {
+        t_write(argv[i]);
+        t_newline();
+    }
+    return CMD_EXIT_SUCCESS;
 }
 
 int c_clear(int argc, char* argv[]) {
