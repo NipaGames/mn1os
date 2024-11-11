@@ -8,6 +8,10 @@ volatile size_t g_t_pos_y;
 volatile size_t g_t_tabw;
 volatile uint8_t g_t_color;
 char g_t_input_line[256];
+volatile size_t g_t_input_start_pos_x;
+volatile size_t g_t_input_start_pos_y;
+volatile size_t g_t_input_end_pos_x;
+volatile size_t g_t_input_end_pos_y;
 volatile size_t g_t_input_pos;
 volatile size_t g_t_input_len;
 volatile size_t g_t_input_start_tabw;
@@ -65,6 +69,10 @@ void t_init() {
     g_t_tabw = 0;
     g_t_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     g_t_input_pos = 0;
+    g_t_input_start_pos_x = 0;
+    g_t_input_start_pos_y = 0;
+    g_t_input_end_pos_x = 0;
+    g_t_input_end_pos_y = 0;
     g_t_input_len = 0;
     g_t_scanning = 0;
     t_sync_cursor_pos();
@@ -209,7 +217,7 @@ void t_hide_cursor() {
     outb(0x3d5, 0x20);
 }
 
-size_t get_prev_tabw() {
+size_t get_input_prev_tabw() {
     size_t n = TERMINAL_TAB_WIDTH - g_t_input_start_tabw;
     size_t i = g_t_input_pos;
     // please don't. just don't.
@@ -226,10 +234,16 @@ size_t get_prev_tabw() {
     return TERMINAL_TAB_WIDTH - (n % TERMINAL_TAB_WIDTH);
 }
 
+size_t get_input_vga_buffer_len() {
+    size_t end_pos = g_t_input_end_pos_y * VGA_WIDTH + g_t_input_end_pos_x;
+    size_t start_pos = g_t_input_start_pos_y * VGA_WIDTH + g_t_input_start_pos_x;
+    return end_pos - start_pos;
+}
+
 size_t input_go_back_char(size_t pos, int is_tab) {
     size_t len = 1;
     if (is_tab) {
-        len = get_prev_tabw();
+        len = get_input_prev_tabw();
         g_t_tabw = len;
     }
     else if (g_t_tabw++ == TERMINAL_TAB_WIDTH)
@@ -243,7 +257,7 @@ size_t input_go_back_char(size_t pos, int is_tab) {
 size_t input_go_forward_char(size_t pos, int is_tab) {
     size_t len = 1;
     if (is_tab) {
-        len = get_prev_tabw();
+        len = get_input_prev_tabw();
         g_t_tabw = TERMINAL_TAB_WIDTH;
     }
     else if (--g_t_tabw == 0)
@@ -252,6 +266,50 @@ size_t input_go_forward_char(size_t pos, int is_tab) {
     g_t_pos_y = next_pos / VGA_WIDTH;
     g_t_pos_x = next_pos % VGA_WIDTH;
     return len;
+}
+
+void input_shift_input_line_vga(size_t pos, int offset) {
+    size_t end_pos = g_t_input_end_pos_y * VGA_WIDTH + g_t_input_end_pos_x;
+    size_t len = end_pos - pos;
+    for (size_t i = 0; i < len; i++) {
+        size_t from;
+        if (offset > 0)
+            from = end_pos - i - 1;
+        else
+            from = pos + i;
+
+        if (from + offset >= VGA_HEIGHT * VGA_WIDTH) {
+            t_scroll(1);
+            pos -= VGA_WIDTH;
+            end_pos -= VGA_WIDTH;
+            i--;
+            continue;
+        }
+        g_t_buf[from + offset] = g_t_buf[from];
+    }
+    if (offset > 0)
+        t_erase(pos, offset);
+    else
+        t_erase(end_pos + offset, -offset);
+}
+
+void input_shift_input_line(size_t pos, int offset) {
+    for (size_t i = 0; i < g_t_input_len - pos; i++) {
+        size_t from;
+        if (offset > 0)
+            from = g_t_input_len - i - 1;
+        else
+            from = pos + i - offset;
+        g_t_input_line[from + offset] = g_t_input_line[from];
+    }
+    if (offset > 0) {
+        for (int i = 0; i < offset; i++)
+            g_t_input_line[pos + i] = '\0';
+    }
+    else {
+        for (int i = 0; i < -offset; i++)
+            g_t_input_line[g_t_input_len - 1 - i - offset] = '\0';
+    }
 }
 
 void t_key_press(uint32_t key, WCHAR c) {
@@ -263,6 +321,11 @@ void t_key_press(uint32_t key, WCHAR c) {
         return;
     size_t vga_buffer_pos = g_t_pos_y * VGA_WIDTH + g_t_pos_x;
     if (key == KEY_ENTER || key == KEY_KEYPAD_ENTER) {
+        if (g_t_input_len > 0) {
+            g_t_pos_x = g_t_input_end_pos_x;
+            g_t_pos_y = g_t_input_end_pos_y;
+        }
+        g_t_input_pos = g_t_input_len;
         g_t_input_line[g_t_input_len] = '\0';
         g_t_scanning = 0;
         return;
@@ -270,20 +333,26 @@ void t_key_press(uint32_t key, WCHAR c) {
     else if (key == KEY_LEFT || key == KEY_BACKSPACE) {
         if (g_t_input_pos == 0)
             return;
-        if (key == KEY_BACKSPACE && g_t_input_pos != g_t_input_len) {
-            return;
-        }
         char prev;
+        size_t clen = 0;
         do {
             prev = g_t_input_line[--g_t_input_pos];
+            clen++;
             if (key == KEY_BACKSPACE) {
                 g_t_input_line[g_t_input_pos] = '\0';
                 g_t_input_len--;
             }
         } while ((prev & 0xc0) == 0x80);
         size_t len = input_go_back_char(vga_buffer_pos, prev == '\t');
-        if (key == KEY_BACKSPACE)
-            t_erase(vga_buffer_pos - len, len);
+        if (key == KEY_BACKSPACE) {
+            if (g_t_input_pos == g_t_input_len) {
+                t_erase(vga_buffer_pos - len, len);
+            }
+            else {
+                input_shift_input_line_vga(vga_buffer_pos, -len);
+                input_shift_input_line(g_t_input_pos, -clen);
+            }
+        }
     }
     else if (key == KEY_RIGHT) {
         if (g_t_input_pos == g_t_input_len)
@@ -301,25 +370,35 @@ void t_key_press(uint32_t key, WCHAR c) {
             return;
         uint8_t byte1 = (c & 0xff00) >> 8;
         uint8_t byte2 = (c & 0x00ff);
+        size_t step = byte1 == '\t' ? g_t_tabw : 1;
         if (is_utf8(c)) {
-            if (g_t_input_len != sizeof(g_t_input_line) - 2) {
-                if (g_t_input_pos != g_t_input_len) {
-                    return;
-                }
-                g_t_input_line[g_t_input_pos++] = byte1;
-                g_t_input_line[g_t_input_pos++] = byte2;
-                g_t_input_len += 2;
-                t_put_char_utf8(c);
+            if (g_t_input_len == sizeof(g_t_input_line) - 2)
+                return;
+            if (g_t_input_pos != g_t_input_len) {
+                input_shift_input_line_vga(vga_buffer_pos, step);
+                input_shift_input_line(g_t_input_pos, 2);
             }
+            g_t_input_line[g_t_input_pos++] = byte1;
+            g_t_input_line[g_t_input_pos++] = byte2;
+            g_t_input_len += 2;
+            t_put_char_utf8(c);
         }
         else {
             if (g_t_input_pos != g_t_input_len) {
-                return;
+                input_shift_input_line_vga(vga_buffer_pos, step);
+                input_shift_input_line(g_t_input_pos, 1);
             }
             g_t_input_line[g_t_input_pos++] = byte1;
             g_t_input_len++;
             t_put_char(byte1);
         }
+        size_t end_pos = (g_t_input_end_pos_y + g_t_pos_y) * VGA_WIDTH + g_t_input_end_pos_x + g_t_pos_x - vga_buffer_pos;
+        g_t_input_end_pos_y = end_pos / VGA_WIDTH;
+        g_t_input_end_pos_x = end_pos % VGA_WIDTH;
+    }
+    if (g_t_input_pos == g_t_input_len) {
+        g_t_input_end_pos_x = g_t_pos_x;
+        g_t_input_end_pos_y = g_t_pos_y;
     }
     t_sync_cursor_pos();
 }
@@ -332,6 +411,10 @@ char* t_scan_line() {
     t_set_cursor(TEXT_MODE_CURSOR_UNDERLINE);
     g_t_input_pos = 0;
     g_t_input_len = 0;
+    g_t_input_start_pos_x = g_t_pos_x;
+    g_t_input_start_pos_y = g_t_pos_y;
+    g_t_input_end_pos_x = g_t_input_start_pos_x;
+    g_t_input_end_pos_y = g_t_input_start_pos_x;
     g_t_input_start_tabw = g_t_tabw;
     g_t_scanning = 1;
     while (g_t_scanning);
