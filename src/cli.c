@@ -37,17 +37,14 @@ void enter_cli() {
             continue;
         i = begin;
         while (line[i] != '\0') {
-            if (isspace(line[i]) && (quotes % 2) == 1) {
+            if (isspace(line[i]) && (quotes % 2) == 0) {
                 while (isspace(line[++i]));
                 if (line[i] == '\0')
                     break;
                 argc++;
             }
-            else {
-                if (line[i] == '"')
-                    quotes++;
-                i++;
-            }
+            else if (line[i++] == '"')
+                quotes++;
         }
         if ((quotes % 2) == 1) {
             t_write("syntax error\n");
@@ -81,7 +78,7 @@ void enter_cli() {
             }
             while (isspace(line[++i]));
         }
-        for (int i = 0; i < sizeof(g_cli_commands) / sizeof(g_cli_commands[0]); i++) {
+        for (size_t i = 0; i < sizeof(g_cli_commands) / sizeof(g_cli_commands[0]); i++) {
             const cli_command* cmd = &g_cli_commands[i];
             if (strcmp(argv[0], cmd->name) == 0) {
                 int err = cmd->handler(argc, argv);
