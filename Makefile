@@ -49,7 +49,10 @@ pack_custom_boot:
 	$(LD) --oformat binary -Tlinker.ld $(BUILD_DIR)/custom_bootloader/kernel_entry.o $(BUILD_DIR)/common/kernel.o -o $(BUILD_DIR)/custom_bootloader/kernel.bin
 	mkdir -p $(BIN_DIR)
 	cat $(BUILD_DIR)/custom_bootloader/boot.bin $(BUILD_DIR)/custom_bootloader/kernel.bin > $(BIN_DIR)/mn1os.img
+	du -h $(BIN_DIR)/mn1os.img
 	truncate -s 1440K $(BIN_DIR)/mn1os.img
+	@echo "[standalone boot build finished]"
+	@echo
 
 define MULTIBOOT_GRUB_CFG
 menuentry "MN1 OS" {
@@ -66,4 +69,6 @@ pack_multiboot:
 	echo "$$MULTIBOOT_GRUB_CFG" > $(BUILD_DIR)/multiboot/iso/boot/grub/grub.cfg
 	mkdir -p $(BIN_DIR)
 	grub-mkrescue -o $(BIN_DIR)/mn1os_grub.iso $(BUILD_DIR)/multiboot/iso
+	@echo "[GRUB boot build finished]"
+	@echo
 

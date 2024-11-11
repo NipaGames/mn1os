@@ -403,6 +403,36 @@ WCHAR keycode_to_char(enum keymap keys, uint32_t key, enum keyboard_modifiers mo
                 break;
         }
     }
+    int flag_alt_gr = ((modifiers & KB_MODIFIER_ALT_GR) == KB_MODIFIER_ALT_GR);
+    if (flag_alt_gr) {
+        switch (keys) {
+            case KEYMAP_US:
+                break;
+            case KEYMAP_FI:
+                switch (key) {
+                    case KEY_2: return 0x4000;
+                    case KEY_3: return 0xc2a3;
+                    case KEY_4: return 0x2400;
+                    case KEY_7: return 0x7b00;
+                    case KEY_8: return 0x5b00;
+                    case KEY_9: return 0x5d00;
+                    case KEY_0: return 0x7d00;
+                    case KEY_PLUS: return 0x5c00;
+                    case KEY_ACUTE_ACCENT: return 0xc2b8;
+                    case KEY_DIAERESIS: return 0x7e00;
+                    case KEY_A_DIAERESIS:
+                        key = 0xc3a6;
+                        break;
+                    case KEY_O_DIAERESIS:
+                        key = 0xc3b8;
+                        break;
+                    case KEY_LT: return 0x7c00;
+                    default:
+                        break;
+                }
+                break;
+        }
+    }
     int flag_capitalize = flag_shift ^ ((modifiers & KB_MODIFIER_CAPS_LOCK) == KB_MODIFIER_CAPS_LOCK);
     if (key >= 0x20 && key < 0xf0) {
         if (flag_capitalize)

@@ -5,11 +5,14 @@
 #include "utf8.h"
 
 enum keyboard_modifiers {
-    KB_MODIFIER_NONE            = 0x0000,
-    KB_MODIFIER_SHIFT           = 0x0001,
-    KB_MODIFIER_CAPS_LOCK       = 0x0010,
-    KB_MODIFIER_NUM_LOCK        = 0x0100,
-    KB_MODIFIER_SCROLL_LOCK     = 0x1000,
+    KB_MODIFIER_NONE            = 0b00000000,
+    KB_MODIFIER_SCROLL_LOCK     = 0b00000001,
+    KB_MODIFIER_NUM_LOCK        = 0b00000010,
+    KB_MODIFIER_CAPS_LOCK       = 0b00000100,
+    KB_MODIFIER_SHIFT           = 0b00001000,
+    KB_MODIFIER_CTRL            = 0b00010000,
+    KB_MODIFIER_ALT             = 0b00100000,
+    KB_MODIFIER_ALT_GR          = 0b01000000,
 };
 
 enum keycode {
@@ -86,6 +89,20 @@ enum keycode {
     KEY_CAPS_LOCK   = 0x00090000,
     KEY_NUM_LOCK    = 0x000a0000,
     KEY_SCROLL_LOCK = 0x000b0000,
+    KEY_ALT_GR      = 0x000c0000,
+    KEY_LEFT        = 0x000d0000,
+    KEY_DOWN        = 0x000e0000,
+    KEY_UP          = 0x000f0000,
+    KEY_RIGHT       = 0x00100000,
+    KEY_PRT_SC      = 0x00110000,
+    KEY_PAUSE       = 0x00120000,
+    KEY_INSERT      = 0x00130000,
+    KEY_HOME        = 0x00140000,
+    KEY_DELETE      = 0x00150000,
+    KEY_END         = 0x00160000,
+    KEY_PAGE_UP     = 0x00170000,
+    KEY_PAGE_DOWN   = 0x00180000,
+    KEY_CTRL_RIGHT  = 0x00190000,
     KEY_F1          = 0x00800000,
     KEY_F2          = 0x00810000,
     KEY_F3          = 0x00820000,
@@ -112,6 +129,8 @@ enum keycode {
     KEY_KEYPAD_PERIOD = KEY_KEYPAD | KEY_PERIOD,
     KEY_KEYPAD_ASTERISK = KEY_KEYPAD | 0x2a,
     KEY_KEYPAD_PLUS = KEY_KEYPAD | 0x2b,
+    KEY_KEYPAD_ENTER = KEY_KEYPAD | KEY_ENTER,
+    KEY_KEYPAD_SLASH = KEY_KEYPAD | KEY_SLASH,
 };
 
 void kb_init();

@@ -14,6 +14,11 @@ enum keymap g_kb_keymap;
 
 volatile int g_kb_shift_left_down;
 volatile int g_kb_shift_right_down;
+volatile int g_kb_alt_gr_down;
+volatile int g_kb_scroll_lock_down;
+volatile int g_kb_scroll_lock_toggled;
+volatile int g_kb_num_lock_down;
+volatile int g_kb_num_lock_toggled;
 volatile int g_kb_caps_lock_down;
 volatile int g_kb_caps_lock_toggled;
 
@@ -38,15 +43,16 @@ enum keymap kb_get_keymap() {
 }
 
 void update_modifier_leds() {
-    uint8_t scroll_lock_set = (g_kb_modifiers & KB_MODIFIER_SCROLL_LOCK) == KB_MODIFIER_SCROLL_LOCK;
-    uint8_t num_lock_set = (g_kb_modifiers & KB_MODIFIER_NUM_LOCK) == KB_MODIFIER_NUM_LOCK;
-    uint8_t caps_lock_set = (g_kb_modifiers & KB_MODIFIER_CAPS_LOCK) == KB_MODIFIER_CAPS_LOCK;
     outb(PS2_KEYBOARD_DATA_PORT, 0xed);
-    outb(PS2_KEYBOARD_DATA_PORT, (scroll_lock_set << 0) | (num_lock_set << 1) | (caps_lock_set << 2));
+    outb(PS2_KEYBOARD_DATA_PORT, g_kb_modifiers & 0b111);
 }
 
-void toggle_caps_lock() {
-    g_kb_modifiers ^= KB_MODIFIER_CAPS_LOCK;
+int is_modifier_set(enum keyboard_modifiers modifier) {
+    return (g_kb_modifiers & modifier) == modifier;
+}
+
+void toggle_modifier(enum keyboard_modifiers modifier) {
+    g_kb_modifiers ^= modifier;
     update_modifier_leds();
 }
 
@@ -65,6 +71,21 @@ void key_press(enum keycode key) {
                 return;
             g_kb_shift_right_down = 1;
             break;
+        case KEY_ALT_GR:
+            if (g_kb_alt_gr_down)
+                return;
+            g_kb_alt_gr_down = 1;
+            break;
+        case KEY_SCROLL_LOCK:
+            if (g_kb_scroll_lock_down)
+                return;
+            g_kb_scroll_lock_down = 1;
+            break;
+        case KEY_NUM_LOCK:
+            if (g_kb_num_lock_down)
+                return;
+            g_kb_num_lock_down = 1;
+            break;
         case KEY_CAPS_LOCK:
             if (g_kb_caps_lock_down)
                 return;
@@ -78,9 +99,24 @@ void key_press(enum keycode key) {
         case KEY_SHIFT_RIGHT:
             g_kb_modifiers |= KB_MODIFIER_SHIFT;
             break;
+        case KEY_ALT_GR:
+            g_kb_modifiers |= KB_MODIFIER_ALT_GR;
+            break;
+        case KEY_SCROLL_LOCK:
+            if (!is_modifier_set(KB_MODIFIER_SCROLL_LOCK)) {
+                toggle_modifier(KB_MODIFIER_SCROLL_LOCK);
+                g_kb_scroll_lock_toggled = 1;
+            }
+            break;
+        case KEY_NUM_LOCK:
+            if (!is_modifier_set(KB_MODIFIER_NUM_LOCK)) {
+                toggle_modifier(KB_MODIFIER_NUM_LOCK);
+                g_kb_num_lock_toggled = 1;
+            }
+            break;
         case KEY_CAPS_LOCK:
-            if ((g_kb_modifiers & KB_MODIFIER_CAPS_LOCK) == 0) {
-                toggle_caps_lock();
+            if (!is_modifier_set(KB_MODIFIER_CAPS_LOCK)) {
+                toggle_modifier(KB_MODIFIER_CAPS_LOCK);
                 g_kb_caps_lock_toggled = 1;
             }
             break;
@@ -100,6 +136,15 @@ void key_release(enum keycode key) {
         case KEY_SHIFT_RIGHT:
             g_kb_shift_right_down = 0;
             break;
+        case KEY_ALT_GR:
+            g_kb_alt_gr_down = 0;
+            break;
+        case KEY_SCROLL_LOCK:
+            g_kb_scroll_lock_down = 0;
+            break;
+        case KEY_NUM_LOCK:
+            g_kb_num_lock_down = 0;
+            break;
         case KEY_CAPS_LOCK:
             g_kb_caps_lock_down = 0;
             break;
@@ -112,11 +157,26 @@ void key_release(enum keycode key) {
             if (!g_kb_shift_left_down && !g_kb_shift_right_down)
                 g_kb_modifiers &= ~KB_MODIFIER_SHIFT;
             break;
+        case KEY_ALT_GR:
+            g_kb_modifiers &= ~KB_MODIFIER_ALT_GR;
+            break;
+        case KEY_SCROLL_LOCK:
+            if (g_kb_scroll_lock_toggled)
+                g_kb_scroll_lock_toggled = 0;
+            else
+                toggle_modifier(KB_MODIFIER_SCROLL_LOCK);
+            break;
+        case KEY_NUM_LOCK:
+            if (g_kb_num_lock_toggled)
+                g_kb_num_lock_toggled = 0;
+            else
+                toggle_modifier(KB_MODIFIER_NUM_LOCK);
+            break;
         case KEY_CAPS_LOCK:
             if (g_kb_caps_lock_toggled)
                 g_kb_caps_lock_toggled = 0;
             else
-                toggle_caps_lock();
+                toggle_modifier(KB_MODIFIER_CAPS_LOCK);
             break;
         default:
             break;
@@ -124,20 +184,57 @@ void key_release(enum keycode key) {
     g_kb_on_key_release(key, keycode_to_char(g_kb_keymap, key, g_kb_modifiers));
 }
 
+uint32_t get_e0_keycode(uint8_t raw) {
+    switch (raw) {
+        case 0x1c: return KEY_KEYPAD_ENTER | KEY_PRESS;
+        case 0x1d: return KEY_CTRL_RIGHT | KEY_PRESS;
+        case 0x35: return KEY_KEYPAD_SLASH | KEY_PRESS;
+        case 0x38: return KEY_ALT_GR | KEY_PRESS;
+        case 0x47: return KEY_HOME | KEY_PRESS;
+        case 0x48: return KEY_UP | KEY_PRESS;
+        case 0x49: return KEY_PAGE_UP | KEY_PRESS;
+        case 0x4b: return KEY_LEFT | KEY_PRESS;
+        case 0x4d: return KEY_RIGHT | KEY_PRESS;
+        case 0x4f: return KEY_END | KEY_PRESS;
+        case 0x50: return KEY_DOWN | KEY_PRESS;
+        case 0x51: return KEY_PAGE_DOWN | KEY_PRESS;
+        case 0x52: return KEY_INSERT | KEY_PRESS;
+        case 0x53: return KEY_DELETE | KEY_PRESS;
+        case 0x9c: return KEY_KEYPAD_ENTER | KEY_RELEASE;
+        case 0x9d: return KEY_CTRL_RIGHT | KEY_RELEASE;
+        case 0xb5: return KEY_KEYPAD_SLASH | KEY_RELEASE;
+        case 0xb8: return KEY_ALT_GR | KEY_RELEASE;
+        case 0xc7: return KEY_HOME | KEY_RELEASE;
+        case 0xc8: return KEY_UP | KEY_RELEASE;
+        case 0xc9: return KEY_PAGE_UP | KEY_RELEASE;
+        case 0xcb: return KEY_LEFT | KEY_RELEASE;
+        case 0xcd: return KEY_RIGHT | KEY_RELEASE;
+        case 0xcf: return KEY_END | KEY_RELEASE;
+        case 0xd0: return KEY_DOWN | KEY_RELEASE;
+        case 0xd1: return KEY_PAGE_DOWN | KEY_RELEASE;
+        case 0xd2: return KEY_INSERT | KEY_RELEASE;
+        case 0xd3: return KEY_DELETE | KEY_RELEASE;
+        default: return KEY_UNKNOWN;
+    }
+}
+
 void handle_keyboard() {
     uint8_t raw = inb(PS2_KEYBOARD_DATA_PORT);
     // multi byte scancode
-    if (raw == 0xe0) {
-        g_kb_ps2_state = KB_PS2_STATE_E0_READ;
-        return;
-    }
+    uint32_t keycode;
     // todo implement
     if (g_kb_ps2_state == KB_PS2_STATE_E0_READ) {
         g_kb_ps2_state = KB_PS2_STATE_NORMAL;
-        return;
+        keycode = get_e0_keycode(raw);
     }
-    uint32_t keycode = ps2_scancodes_get(g_kb_keymap)[raw];
-    if (keycode == 0)
+    else {
+        if (raw == 0xe0) {
+            g_kb_ps2_state = KB_PS2_STATE_E0_READ;
+            return;
+        }
+        keycode = ps2_scancodes_get(g_kb_keymap)[raw];
+    }
+    if (keycode == KEY_UNKNOWN)
         return;
     if ((keycode & KEY_RELEASE) == KEY_RELEASE)
         key_release(keycode & ~KEY_RELEASE);
@@ -152,6 +249,11 @@ void kb_init() {
     g_kb_keymap = KEYMAP_US;
     g_kb_shift_left_down = 0;
     g_kb_shift_right_down = 0;
+    g_kb_alt_gr_down = 0;
+    g_kb_scroll_lock_down = 0;
+    g_kb_scroll_lock_toggled = 0;
+    g_kb_num_lock_down = 0;
+    g_kb_num_lock_toggled = 0;
     g_kb_caps_lock_down = 0;
     g_kb_caps_lock_toggled = 0;
     g_kb_ps2_state = KB_PS2_STATE_NORMAL;
