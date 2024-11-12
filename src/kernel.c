@@ -25,10 +25,11 @@ void kernel_main() {
     kb_init();
     t_hook_keyboard();
 
-    t_write("Press any key to enter the CLI.\n");
+    t_write("Use 'help' to list all commands.\n");
+    t_newline();
     // t_write("Paina mitä tahansa näppäintä jatkaaksesi.\n");
-    t_wait_for_input();
-    t_clear();
+    t_sync_cursor_pos();
+    t_set_cursor(TEXT_MODE_CURSOR_UNDERLINE);
     enter_cli();
 
     // power off

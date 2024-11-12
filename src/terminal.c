@@ -18,13 +18,25 @@ volatile size_t g_t_input_start_tabw;
 volatile int g_t_scanning;
 volatile int g_t_waiting_for_input;
 
-void t_erase(size_t pos, size_t count) {
+void t_set(size_t pos, uint16_t entry) {
+    if (pos >= VGA_HEIGHT * VGA_WIDTH)
+        return;
+    g_t_buf[pos] = entry;
+}
+
+uint16_t t_get(size_t pos) {
+    return g_t_buf[pos];
+}
+
+void t_fill(size_t pos, size_t count, uint16_t entry) {
     while (count > 0) {
-        if (pos >= VGA_HEIGHT * VGA_WIDTH)
-            break;
-        g_t_buf[pos++] = vga_entry(' ', g_t_color);
+        t_set(pos++, entry);
         count--;
     }
+}
+
+void t_erase(size_t pos, size_t count) {
+    t_fill(pos, count, vga_entry(' ', g_t_color));
 }
 
 void t_clear() {
@@ -39,7 +51,7 @@ void t_scroll(size_t rows) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
             size_t y_from = y + rows;
             g_t_buf[y * VGA_WIDTH + x] = 
-                (y_from < VGA_HEIGHT) ? g_t_buf[y_from * VGA_WIDTH + x]: vga_entry(' ', g_t_color);
+                (y_from < VGA_HEIGHT) ? g_t_buf[y_from * VGA_WIDTH + x] : vga_entry(' ', g_t_color);
         }
     }
     g_t_pos_y -= rows;
@@ -445,9 +457,6 @@ char* t_scan_line() {
 }
 
 void t_wait_for_input() {
-    t_sync_cursor_pos();
-    t_set_cursor(TEXT_MODE_CURSOR_UNDERLINE);
     g_t_waiting_for_input = 1;
     while (g_t_waiting_for_input);
-    t_hide_cursor();
 }

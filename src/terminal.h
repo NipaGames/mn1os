@@ -40,23 +40,26 @@ static inline void vga_get(uint16_t v, uint8_t* uc, uint8_t* color) {
     *color = (uint8_t) v >> 8;
 }
 
-void    t_erase(size_t pos, size_t count);
-void    t_clear();
-void    t_scroll(size_t rows);
-size_t  t_search_next_free_ln();
-void    t_init();
-void    t_hook_keyboard();
-void    t_set_pos(size_t x, size_t y);
-void    t_get_pos(size_t* x, size_t* y);
-void    t_set_color(uint8_t color);
-void    t_get_color(uint8_t* color);
-void    t_put_char(char c);
-void    t_put_digit(int digit);
-void    t_newline();
-void    t_tab();
-void    t_write_s(const char* data, size_t size);
-void    t_write(const char* data);
-void    t_write_num(int num, int base);
+void        t_set(size_t pos, uint16_t entry);
+uint16_t    t_get(size_t pos);
+void        t_fill(size_t pos, size_t count, uint16_t entry);
+void        t_erase(size_t pos, size_t count);
+void        t_clear();
+void        t_scroll(size_t rows);
+size_t      t_search_next_free_ln();
+void        t_init();
+void        t_hook_keyboard();
+void        t_set_pos(size_t x, size_t y);
+void        t_get_pos(size_t* x, size_t* y);
+void        t_set_color(uint8_t color);
+void        t_get_color(uint8_t* color);
+void        t_put_char(char c);
+void        t_put_digit(int digit);
+void        t_newline();
+void        t_tab();
+void        t_write_s(const char* data, size_t size);
+void        t_write(const char* data);
+void        t_write_num(int num, int base);
 
 static inline void t_write_dec(int num) {
     t_write_num(num, 10);

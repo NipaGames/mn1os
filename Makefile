@@ -19,6 +19,7 @@ COMMON_KERNEL_OBJS= \
 	$(BUILD_DIR)/common/sources/pit.o \
 	$(BUILD_DIR)/common/sources/keyboard.o \
 	$(BUILD_DIR)/common/sources/cli.o \
+	$(BUILD_DIR)/common/sources/commands.o \
 	$(BUILD_DIR)/common/sources/utf8.o \
 	$(BUILD_DIR)/common/sources/keymaps.o
 
