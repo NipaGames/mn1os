@@ -138,8 +138,8 @@ void kb_init();
 typedef void (*kb_key_event_handler)(uint32_t key, WCHAR c);
 void kb_on_key_press(kb_key_event_handler handler);
 void kb_on_key_release(kb_key_event_handler handler);
-enum keymap;
-void kb_set_keymap(enum keymap keys);
-enum keymap kb_get_keymap();
+void kb_set_keymap(uint8_t keys);
+uint8_t kb_get_keymap();
+enum keyboard_modifiers kb_get_modifiers();
 
 #endif

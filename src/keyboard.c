@@ -1,7 +1,6 @@
 #include "keyboard.h"
 #include "io.h"
 #include "irq.h"
-#include "utf8.h"
 #include "keymaps.h"
 
 #define PS2_KEYBOARD_DATA_PORT 0x60
@@ -14,6 +13,8 @@ enum keymap g_kb_keymap;
 
 volatile int g_kb_shift_left_down;
 volatile int g_kb_shift_right_down;
+volatile int g_kb_ctrl_left_down;
+volatile int g_kb_ctrl_right_down;
 volatile int g_kb_alt_gr_down;
 volatile int g_kb_scroll_lock_down;
 volatile int g_kb_scroll_lock_toggled;
@@ -35,10 +36,10 @@ void kb_on_key_press(kb_key_event_handler handler) {
 void kb_on_key_release(kb_key_event_handler handler) {
     g_kb_on_key_release = handler;
 }
-void kb_set_keymap(enum keymap keys) {
+void kb_set_keymap(uint8_t keys) {
     g_kb_keymap = keys;
 }
-enum keymap kb_get_keymap() {
+uint8_t kb_get_keymap() {
     return g_kb_keymap;
 }
 
@@ -71,6 +72,16 @@ void key_press(enum keycode key) {
                 return;
             g_kb_shift_right_down = 1;
             break;
+        case KEY_CTRL_LEFT:
+            if (g_kb_ctrl_left_down)
+                return;
+            g_kb_ctrl_left_down = 1;
+            break;
+        case KEY_CTRL_RIGHT:
+            if (g_kb_ctrl_right_down)
+                return;
+            g_kb_ctrl_right_down = 1;
+            break;
         case KEY_ALT_GR:
             if (g_kb_alt_gr_down)
                 return;
@@ -98,6 +109,10 @@ void key_press(enum keycode key) {
         case KEY_SHIFT_LEFT:
         case KEY_SHIFT_RIGHT:
             g_kb_modifiers |= KB_MODIFIER_SHIFT;
+            break;
+        case KEY_CTRL_LEFT:
+        case KEY_CTRL_RIGHT:
+            g_kb_modifiers |= KB_MODIFIER_CTRL;
             break;
         case KEY_ALT_GR:
             g_kb_modifiers |= KB_MODIFIER_ALT_GR;
@@ -136,6 +151,12 @@ void key_release(enum keycode key) {
         case KEY_SHIFT_RIGHT:
             g_kb_shift_right_down = 0;
             break;
+        case KEY_CTRL_LEFT:
+            g_kb_ctrl_left_down = 0;
+            break;
+        case KEY_CTRL_RIGHT:
+            g_kb_ctrl_right_down = 0;
+            break;
         case KEY_ALT_GR:
             g_kb_alt_gr_down = 0;
             break;
@@ -156,6 +177,11 @@ void key_release(enum keycode key) {
         case KEY_SHIFT_RIGHT:
             if (!g_kb_shift_left_down && !g_kb_shift_right_down)
                 g_kb_modifiers &= ~KB_MODIFIER_SHIFT;
+            break;
+        case KEY_CTRL_LEFT:
+        case KEY_CTRL_RIGHT:
+            if (!g_kb_ctrl_left_down && !g_kb_ctrl_right_down)
+                g_kb_modifiers &= ~KB_MODIFIER_CTRL;
             break;
         case KEY_ALT_GR:
             g_kb_modifiers &= ~KB_MODIFIER_ALT_GR;
@@ -249,6 +275,8 @@ void kb_init() {
     g_kb_keymap = KEYMAP_US;
     g_kb_shift_left_down = 0;
     g_kb_shift_right_down = 0;
+    g_kb_ctrl_left_down = 0;
+    g_kb_ctrl_right_down = 0;
     g_kb_alt_gr_down = 0;
     g_kb_scroll_lock_down = 0;
     g_kb_scroll_lock_toggled = 0;
@@ -276,4 +304,8 @@ void kb_init() {
     // enable scancodes
     outb(PS2_KEYBOARD_DATA_PORT, 0xf4);
     sti();
+}
+
+enum keyboard_modifiers kb_get_modifiers() {
+    return g_kb_modifiers;
 }

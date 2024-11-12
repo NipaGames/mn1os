@@ -3,7 +3,7 @@
 
 #include "keyboard.h"
 
-enum keymap {
+enum keymap : uint8_t {
     KEYMAP_US,
     KEYMAP_FI,
 };
